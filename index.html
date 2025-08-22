@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Финансовый Планер — прототип</title>
+  <style>
+    :root{
+      --bg:#0f1220;
+      --card:#171b2e;
+      --muted:#8e97b3;
+      --text:#e8ecff;
+      --accent:#6dd3fb;
+      --accent2:#22d3ee;
+      --warn:#ff8a8a;
+      --ok:#86efac;
+      --line1:#7aa2ff;
+      --line2:#ffb86b;
+      --line3:#4ade80;
+      --grid:#2a3050;
+      --purple:#a78bfa;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1a1f37 0%, #0f1220 60%) no-repeat fixed, var(--bg);
+      color:var(--text);
+      line-height:1.5;
+    }
+    #app{
+      max-width:1200px;
+      margin:32px auto 80px;
+      padding:0 16px;
+    }
+    h1{margin:0 0 18px;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted); margin-bottom:24px}
+    .grid{
+      display:grid;
+      gap:16px;
+    }
+    @media (min-width: 980px){
+      .grid{
+        grid-template-columns: 1.1fr 1fr;
+        align-items:start;
+      }
+    }
+    section{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.0));
+      border:1px solid #242a47;
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    section h2{
+      margin:0 0 12px;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:10px;
+    }
+    label{
+      font-size:13px;
+      color:var(--muted);
+    }
+    input, button, select{
+      background:#0f1326;
+      color:var(--text);
+      border:1px solid #283158;
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      transition:.15s border-color ease;
+    }
+    input:focus, select:focus{border-color:#3f5bd6}
+    input[type="date"]{padding:9px 10px}
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .btn{
+      background:linear-gradient(180deg, #3f5bd6, #334ec0);
+      border:none;
+      padding:10px 14px;
+      font-weight:600;
+      cursor:pointer;
+      transition: transform 0.1s;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.ghost{
+      background:transparent;
+      border:1px solid #334ec0;
+    }
+    .btn.accent{
+      background:linear-gradient(180deg, var(--accent), var(--accent2));
+      color:#0f1220;
+    }
+    .btn.small{
+      padding:6px 10px;
+      font-size:13px;
+    }
+    .btn.icon{
+      padding:8px;
+      min-width:36px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .note{
+      font-size:13px;
+      color:var(--muted);
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+      margin:8px 0 4px;
+    }
+    @media (min-width:680px){
+      .kpi{grid-template-columns: repeat(4, minmax(0,1fr));}
+    }
+    .tile{
+      background: #0f1326;
+      border:1px solid #27305a;
+      border-radius:12px;
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .tile.highlight{
+      background: linear-gradient(135deg, rgba(167,139,250,.06), rgba(109,211,251,.06));
+      border-color:#4338ca;
+    }
+    .tile .label{font-size:12px;color:var(--muted)}
+    .tile .value{font-size:18px;font-weight:700;margin-top:4px}
+    .tile.warn{border-color:#4e1e2a;background:rgba(255,72,72,.06)}
+    .tile.ok{border-color:#2d4a38;background:rgba(61, 194, 124, .06)}
+    .warn-text{color:var(--warn); font-weight:600}
+    .ok-text{color:var(--ok); font-weight:600}
+    .divider{height:1px;background:#27305a;margin:14px 0}
+    #chartWrap{
+      background:#0d1122;
+      border:1px solid #27305a;
+      border-radius:12px;
+      padding:10px;
+    }
+    canvas{width:100%; height:320px; display:block}
+    .months{
+      display:flex; flex-direction:column; gap:10px; margin-top:8px;
+    }
+    .month{
+      background:#0f1326;
+      border:1px solid #27305a;
+      border-radius:12px;
+      padding:12px;
+      position:relative;
+    }
+    .month.current{
+      border-color:#4338ca;
+      background: linear-gradient(135deg, rgba(167,139,250,.03), rgba(109,211,251,.03));
+    }
+    .month-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .month-name{
+      font-weight:600;
+      font-size:15px;
+    }
+    .month-stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .stat-item{
+      background:#0b0f1e;
+      border:1px solid #1f2937;
+      border-radius:8px;
+      padding:8px;
+      text-align:center;
+    }
+    .stat-label{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:2px;
+    }
+    .stat-value{
+      font-size:14px;
+      font-weight:600;
+    }
+    .month-actions{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+    }
+    .transactions{
+      margin-top:10px;
+      max-height:200px;
+      overflow-y:auto;
+    }
+    .transaction{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:6px 8px;
+      background:#0b0f1e;
+      border:1px solid #1f2937;
+      border-radius:6px;
+      margin-bottom:4px;
+      font-size:13px;
+    }
+    .transaction .amount{
+      font-weight:600;
+      color:var(--warn);
+    }
+    .transaction .date{
+      color:var(--muted);
+      font-size:11px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid #27305a; padding:6px 10px; border-radius:999px; 
+      font-size:12px; color:var(--muted);
+    }
+    .pill.accent{
+      background:rgba(109,211,251,.1);
+      border-color:var(--accent);
+      color:var(--accent);
+    }
+    .legend{display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 0}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.plan{background:var(--line1)}
+    .dot.actual{background:var(--line2)}
+    .dot.forecast{background:var(--line3)}
+    .footer-note{margin-top:14px; font-size:12px; color:var(--muted)}
+    .right{justify-self:end}
+    .small{font-size:12px;color:var(--muted)}
+    .hidden{display:none !important}
+    
+    /* Modal */
+    .modal{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      bottom:0;
+      background:rgba(0,0,0,.8);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:1000;
+      padding:20px;
+      opacity:0;
+      visibility:hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal.show{
+      opacity:1;
+      visibility:visible;
+    }
+    .modal-content{
+      background:var(--card);
+      border:1px solid #27305a;
+      border-radius:16px;
+      padding:24px;
+      max-width:400px;
+      width:100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:16px;
+    }
+    .modal-title{
+      font-size:18px;
+      font-weight:700;
+    }
+    .modal-close{
+      background:transparent;
+      border:none;
+      color:var(--muted);
+      font-size:20px;
+      cursor:pointer;
+      padding:0;
+      width:28px;
+      height:28px;
+    }
+    .modal-close:hover{color:var(--text)}
+    
+    /* Recommendations */
+    .recommendations{
+      background: linear-gradient(135deg, rgba(167,139,250,.08), rgba(109,211,251,.08));
+      border:1px solid #4338ca;
+      border-radius:12px;
+      padding:14px;
+      margin-top:12px;
+    }
+    .rec-title{
+      font-size:14px;
+      font-weight:600;
+      margin-bottom:10px;
+      color:var(--purple);
+    }
+    .rec-grid{
+      display:grid;
+      grid-template-columns: repeat(2,1fr);
+      gap:10px;
+    }
+    @media (min-width:600px){
+      .rec-grid{grid-template-columns: repeat(3,1fr);}
+    }
+    .rec-item{
+      background:#0f1326;
+      border:1px solid #27305a;
+      border-radius:8px;
+      padding:10px;
+      text-align:center;
+    }
+    .rec-label{
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+    .rec-value{
+      font-size:16px;
+      font-weight:700;
+      color:var(--accent);
+    }
+    
+    .badge{
+      background:var(--accent);
+      color:#0f1220;
+      padding:2px 6px;
+      border-radius:4px;
+      font-size:10px;
+      font-weight:700;
+      margin-left:6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Финансовый Планер</h1>
+    <div class="sub">Наведи порядок в тратах и уверенно двигайся к цели. Заполни поля, сохрани фактические расходы по месяцам и смотри, как меняется доступный лимит.</div>
+
+    <div class="grid">
+      <!-- ВВОД ДАННЫХ -->
+      <section id="input-section">
+        <h2>Ваш план</h2>
+
+        <div class="field">
+          <label for="initial">Начальный капитал, ₽</label>
+          <input id="initial" type="number" inputmode="decimal" min="0" step="100" placeholder="например, 100000" />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="mandatory">Обязательные платежи в месяц, ₽ <span class="small">(необязательно)</span></label>
+            <input id="mandatory" type="number" inputmode="decimal" min="0" step="100" placeholder="например, 20000" />
+          </div>
+          <div class="field">
+            <label for="target">Целевой баланс к концу периода, ₽</label>
+            <input id="target" type="number" inputmode="decimal" min="0" step="100" placeholder="например, 50000" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="start">Начальная дата</label>
+            <input id="start" type="date" />
+          </div>
+          <div class="field">
+            <label for="end">Конечная дата</label>
+            <input id="end" type="date" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="calcBtn" class="btn">Рассчитать</button>
+          <button id="resetBtn" class="btn ghost">Сбросить</button>
+          <span class="pill" id="monthsInfo">Месяцев: —</span>
+        </div>
+        <div class="note">Количество месяцев считается по датам. Частичный месяц округляется в большую сторону.</div>
+      </section>
+
+      <!-- РЕЗУЛЬТАТЫ И ГРАФИК -->
+      <section id="results-section">
+        <h2>Результаты</h2>
+
+        <div class="kpi">
+          <div class="tile">
+            <div class="label">Доступно для трат за период</div>
+            <div class="value" id="availableTotal">—</div>
+            <div class="small">После вычета обязательных</div>
+          </div>
+
+          <div class="tile" id="limitTile">
+            <div class="label">Лимит трат в месяц (базовый)</div>
+            <div class="value" id="monthlyLimit">—</div>
+            <div class="small">Без учёта фактических</div>
+          </div>
+
+          <div class="tile">
+            <div class="label">Обязательные платежи за период</div>
+            <div class="value" id="mandatoryTotal">—</div>
+          </div>
+
+          <div class="tile" id="feasibilityTile">
+            <div class="label">Состояние плана</div>
+            <div class="value" id="feasibility">—</div>
+          </div>
+        </div>
+
+        <!-- Рекомендации -->
+        <div id="recommendationsBlock" class="recommendations hidden">
+          <div class="rec-title">💡 Рекомендуемые лимиты</div>
+          <div class="rec-grid">
+            <div class="rec-item">
+              <div class="rec-label">В день</div>
+              <div class="rec-value" id="dailyLimit">—</div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-label">В неделю</div>
+              <div class="rec-value" id="weeklyLimit">—</div>
+            </div>
+            <div class="rec-item">
+              <div class="rec-label">В 10 дней</div>
+              <div class="rec-value" id="tenDaysLimit">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div id="chartWrap">
+          <canvas id="chart" width="1000" height="360"></canvas>
+          <div class="legend">
+            <span class="pill"><span class="dot plan"></span> План по балансу</span>
+            <span class="pill"><span class="dot actual"></span> Фактический баланс</span>
+            <span class="pill"><span class="dot forecast"></span> Прогноз до конца</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ФАКТИЧЕСКИЕ ТРАТЫ -->
+    <section id="actual-spending-section">
+      <h2>Фактические траты по месяцам</h2>
+      <div class="note">Добавляй расходы через кнопку "+" для каждого месяца. Можно добавить несколько трат в один месяц.</div>
+      
+      <div id="monthsList" class="months"></div>
+
+      <div class="divider"></div>
+
+      <div class="kpi">
+        <div class="tile">
+          <div class="label">Учтено месяцев</div>
+          <div class="value" id="countSaved">—</div>
+        </div>
+        <div class="tile">
+          <div class="label">Сумма фактических трат</div>
+          <div class="value" id="sumActual">—</div>
+        </div>
+        <div class="tile">
+          <div class="label">Осталось на период</div>
+          <div class="value" id="remainingTotal">—</div>
+        </div>
+        <div class="tile highlight" id="newLimitTile">
+          <div class="label">Новый лимит в месяц</div>
+          <div class="value" id="newMonthlyLimit">—</div>
+          <div class="small">С учётом фактических трат</div>
+        </div>
+      </div>
+
+      <div id="unfeasibleMsg" class="tile warn hidden" style="margin-top:10px;">
+        <div class="label warn-text">Предупреждение</div>
+        <div class="value" style="font-size:16px;font-weight:600;">
+          План невыполним. Увеличьте период или уменьшите обязательные платежи.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Модальное окно для добавления траты -->
+  <div id="addExpenseModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Добавить расход</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="field">
+        <label>Месяц</label>
+        <input type="text" id="modalMonth" readonly style="background:#0b0f1e;">
+      </div>
+      <div class="field">
+        <label for="expenseAmount">Сумма расхода, ₽</label>
+        <input type="number" id="expenseAmount" inputmode="decimal" min="0" step="100" placeholder="например, 5000">
+      </div>
+      <div class="field">
+        <label for="expenseDesc">Описание (необязательно)</label>
+        <input type="text" id="expenseDesc" placeholder="например, Продукты">
+      </div>
+      <div class="actions">
+        <button class="btn accent" onclick="saveExpense()">Добавить</button>
+        <button class="btn ghost" onclick="closeModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===========================
+    // УТИЛИТЫ
+    // ===========================
+    const fmt = new Intl.NumberFormat('ru-RU', { style:'currency', currency:'RUB', maximumFractionDigits:0 });
+    const fmt0 = (n)=> n===null || Number.isNaN(n) ? '—' : fmt.format(n);
+    const fmtShort = (n)=> {
+      if(!Number.isFinite(n)) return '—';
+      if(n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+      if(n >= 1000) return (n/1000).toFixed(1) + 'K';
+      return Math.round(n).toString();
+    };
+
+    function num(el){
+      const v = parseFloat(el.value.replace(',', '.'));
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function monthsDiffCeil(start, end){
+      if(!start || !end) return 0;
+      const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      if(e <= s) return 0;
+      let diff = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+      if(e.getDate() > s.getDate()) diff += 1;
+      return diff;
+    }
+
+    function monthLabels(start, months){
+      const labels = [];
+      for(let i=0;i<months;i++){
+        const d = new Date(start.getFullYear(), start.getMonth()+i, 1);
+        const label = d.toLocaleDateString('ru-RU', { month:'long', year:'numeric' });
+        labels.push(capitalize(label));
+      }
+      return labels;
+    }
+    
+    function capitalize(s){ return s ? s[0].toUpperCase()+s.slice(1) : s; }
+
+    function isCurrentMonth(monthIndex){
+      if(!state.start) return false;
+      const now = new Date();
+      const monthDate = new Date(state.start.getFullYear(), state.start.getMonth() + monthIndex, 1);
+      return now.getFullYear() === monthDate.getFullYear() && now.getMonth() === monthDate.getMonth();
+    }
+
+    // ===========================
+    // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+    // ===========================
+    const state = {
+      initial: 0,
+      mandatory: 0,
+      target: 0,
+      start: null,
+      end: null,
+      months: 0,
+      monthlyTransactions: [], // Массив массивов транзакций по месяцам
+      labels: [],
+      currentModalMonth: -1
+    };
+
+    // Локальное хранилище
+    const STORAGE_KEY = 'finplanner_state_v2';
+    function saveState(){
+      try{
+        const payload = {
+          ...state,
+          start: state.start ? state.start.toISOString() : null,
+          end: state.end ? state.end.toISOString() : null
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      }catch(e){}
+    }
+    
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const obj = JSON.parse(raw);
+        state.initial = obj.initial ?? 0;
+        state.mandatory = obj.mandatory ?? 0;
+        state.target = obj.target ?? 0;
+        state.start = obj.start ? new Date(obj.start) : null;
+        state.end = obj.end ? new Date(obj.end) : null;
+        state.months = obj.months ?? 0;
+        state.monthlyTransactions = obj.monthlyTransactions ?? [];
+        state.labels = obj.labels ?? [];
+      }catch(e){}
+    }
+
+    // ===========================
+    // DOM ЭЛЕМЕНТЫ
+    // ===========================
+    const $initial = document.getElementById('initial');
+    const $mandatory = document.getElementById('mandatory');
+    const $target = document.getElementById('target');
+    const $start = document.getElementById('start');
+    const $end = document.getElementById('end');
+    const $calcBtn = document.getElementById('calcBtn');
+    const $resetBtn = document.getElementById('resetBtn');
+    const $monthsInfo = document.getElementById('monthsInfo');
+    const $availableTotal = document.getElementById('availableTotal');
+    const $monthlyLimit = document.getElementById('monthlyLimit');
+    const $mandatoryTotal = document.getElementById('mandatoryTotal');
+    const $feasibility = document.getElementById('feasibility');
+    const $limitTile = document.getElementById('limitTile');
+    const $feasibilityTile = document.getElementById('feasibilityTile');
+    const $monthsList = document.getElementById('monthsList');
+    const $countSaved = document.getElementById('countSaved');
+    const $sumActual = document.getElementById('sumActual');
+    const $remainingTotal = document.getElementById('remainingTotal');
+    const $newMonthlyLimit = document.getElementById('newMonthlyLimit');
+    const $newLimitTile = document.getElementById('newLimitTile');
+    const $unfeasibleMsg = document.getElementById('unfeasibleMsg');
+    const $recommendationsBlock = document.getElementById('recommendationsBlock');
+    const $dailyLimit = document.getElementById('dailyLimit');
+    const $weeklyLimit = document.getElementById('weeklyLimit');
+    const $tenDaysLimit = document.getElementById('tenDaysLimit');
+    const $chart = document.getElementById('chart');
+    const ctx = $chart.getContext('2d');
+
+    // ===========================
+    // ОСНОВНАЯ ЛОГИКА
+    // ===========================
+    function recalcAll(){
+      state.initial = Math.max(0, num($initial));
+      state.mandatory = Math.max(0, num($mandatory));
+      state.target = Math.max(0, num($target));
+      state.start = $start.value ? new Date($start.value) : null;
+      state.end = $end.value ? new Date($end.value) : null;
+      state.months = monthsDiffCeil(state.start, state.end);
+      $monthsInfo.textContent = `Месяцев: ${state.months || '—'}`;
+
+      if(state.months <= 0 || !state.start || !state.end){
+        state.labels = [];
+        state.monthlyTransactions = [];
+        renderResults({availableTotal:null, monthlyLimit:null, mandatoryTotal:null, feasible:null, newMonthlyLimit:null, remTotal:null, sumActual:null, countSaved:null});
+        $monthsList.innerHTML = '';
+        drawChart([], [], [], []);
+        $recommendationsBlock.classList.add('hidden');
+        saveState();
+        return;
+      }
+
+      state.labels = monthLabels(state.start, state.months);
+      
+      // Инициализация транзакций по месяцам
+      if(state.monthlyTransactions.length !== state.months){
+        const next = new Array(state.months).fill(null).map((_, i) => 
+          state.monthlyTransactions[i] || []
+        );
+        state.monthlyTransactions = next;
+      }
+
+      // Расчёты
+      const availableTotal = (state.initial - state.target) - (state.mandatory * state.months);
+      const monthlyLimit = availableTotal / state.months;
+      
+      // Подсчёт фактических трат
+      const monthlyActuals = state.monthlyTransactions.map(transactions => 
+        transactions.reduce((sum, t) => sum + (t.amount || 0), 0)
+      );
+      const countSaved = monthlyActuals.filter(v => v > 0).length;
+      const sumActual = monthlyActuals.reduce((sum, v) => sum + v, 0);
+      
+      const remTotal = availableTotal - sumActual;
+      const remainingMonths = Math.max(0, state.months - countSaved);
+      const newMonthlyLimit = remainingMonths > 0 ? (remTotal / remainingMonths) : 0;
+      const feasible = monthlyLimit >= 0 && remTotal >= 0;
+
+      renderResults({
+        availableTotal,
+        monthlyLimit,
+        mandatoryTotal: state.mandatory * state.months,
+        feasible,
+        newMonthlyLimit,
+        remTotal,
+        sumActual,
+        countSaved
+      });
+
+      renderMonthsList(monthlyLimit, newMonthlyLimit);
+      renderRecommendations(newMonthlyLimit);
+
+      // График
+      const plannedBalances = makePlannedBalances(state.initial, state.target, state.months);
+      const { actualBalances, forecastBalances } = makeActualAndForecastBalances(
+        plannedBalances, state.initial, state.mandatory, monthlyActuals, newMonthlyLimit
+      );
+      drawChart(state.labels, plannedBalances, actualBalances, forecastBalances);
+
+      saveState();
+    }
+
+    function renderRecommendations(monthlyLimit){
+      if(!Number.isFinite(monthlyLimit) || monthlyLimit <= 0){
+        $recommendationsBlock.classList.add('hidden');
+        return;
+      }
+      $recommendationsBlock.classList.remove('hidden');
+      const daily = monthlyLimit / 30;
+      const weekly = monthlyLimit / 4.3;
+      const tenDays = monthlyLimit / 3;
+      
+      $dailyLimit.textContent = fmtShort(daily) + ' ₽';
+      $weeklyLimit.textContent = fmtShort(weekly) + ' ₽';
+      $tenDaysLimit.textContent = fmtShort(tenDays) + ' ₽';
+    }
+
+    function makePlannedBalances(initial, target, months){
+      const arr = [];
+      for(let i=0;i<=months;i++){
+        const t = i / months;
+        const y = initial + (target - initial) * t;
+        arr.push(y);
+      }
+      return arr;
+    }
+
+    function makeActualAndForecastBalances(planned, initial, mandatory, monthlyActuals, newMonthlyLimit){
+  const actual = [initial];
+  let savedCount = 0;
+  
+  // Проходим по всем месяцам с фактическими тратами
+  for(let i=0;i<monthlyActuals.length;i++){
+    const v = monthlyActuals[i];
+    if(v > 0){
+      const prev = actual[actual.length-1];
+      actual.push(prev - mandatory - v);
+      savedCount++;
+    }
+    else {
+      break;
+    }
+  }
+  
+  // Строим прогноз на оставшиеся месяцы
+  const forecast = [];
+      const totalPoints = planned.length;
+      if(savedCount < monthlyActuals.length){
+        const startY = actual[actual.length-1];
+        forecast.push(startY);
+        const remainingSteps = (totalPoints-1) - savedCount;
+        const monthlyTotalSpend = mandatory + (Number.isFinite(newMonthlyLimit) ? newMonthlyLimit : 0);
+        for(let i=1;i<=remainingSteps;i++){
+          forecast.push(forecast[i-1] - monthlyTotalSpend);
+        }
+      }
+      return { actualBalances: actual, forecastBalances: forecast };
+    }
+
+    function renderResults(data){
+      const {
+        availableTotal, monthlyLimit, mandatoryTotal,
+        feasible, newMonthlyLimit, remTotal, sumActual, countSaved
+      } = data;
+
+      $availableTotal.textContent = fmt0(availableTotal);
+      $monthlyLimit.textContent = Number.isFinite(monthlyLimit) ? fmt0(monthlyLimit) : '—';
+      $mandatoryTotal.textContent = fmt0(mandatoryTotal);
+      $feasibility.textContent = feasible===null ? '—' : (feasible ? 'Выполним ✓' : 'Невыполним ✗');
+      $feasibilityTile.classList.toggle('warn', feasible===false);
+      $feasibilityTile.classList.toggle('ok', feasible===true);
+      $limitTile.classList.toggle('warn', Number.isFinite(monthlyLimit) && monthlyLimit < 0);
+      $limitTile.classList.toggle('ok', Number.isFinite(monthlyLimit) && monthlyLimit >= 0);
+
+      $countSaved.textContent = countSaved ?? '—';
+      $sumActual.textContent = fmt0(sumActual);
+      $remainingTotal.textContent = fmt0(remTotal);
+      $newMonthlyLimit.textContent = Number.isFinite(newMonthlyLimit) ? fmt0(newMonthlyLimit) : '—';
+      $newLimitTile.classList.toggle('warn', Number.isFinite(newMonthlyLimit) && newMonthlyLimit < 0);
+      $newLimitTile.classList.toggle('ok', Number.isFinite(newMonthlyLimit) && newMonthlyLimit >= 0);
+
+      const showUnfeasible = Number.isFinite(monthlyLimit) && monthlyLimit < 0;
+      $unfeasibleMsg.classList.toggle('hidden', !showUnfeasible);
+    }
+
+    function renderMonthsList(baseMonthlyLimit, currentLimit){
+      $monthsList.innerHTML = '';
+      if(state.months <= 0) return;
+
+      state.labels.forEach((label, idx) => {
+        const transactions = state.monthlyTransactions[idx] || [];
+        const monthTotal = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const hasTransactions = transactions.length > 0;
+        const isCurrent = isCurrentMonth(idx);
+
+        const monthDiv = document.createElement('div');
+        monthDiv.className = 'month' + (isCurrent ? ' current' : '');
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'month-header';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'month-name';
+        nameDiv.textContent = label;
+        if(isCurrent){
+          const badge = document.createElement('span');
+          badge.className = 'badge';
+          badge.textContent = 'ТЕКУЩИЙ';
+          nameDiv.appendChild(badge);
+        }
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn accent icon small';
+        addBtn.innerHTML = '+';
+        addBtn.title = 'Добавить расход';
+        addBtn.onclick = () => openAddExpenseModal(idx, label);
+
+        header.appendChild(nameDiv);
+        header.appendChild(addBtn);
+
+        // Stats
+        const stats = document.createElement('div');
+        stats.className = 'month-stats';
+
+        const statPlanned = createStatItem('План (дискретно)', fmt0(baseMonthlyLimit));
+        const statActual = createStatItem('Потрачено', fmt0(monthTotal));
+        const statRemaining = createStatItem('Остаток', fmt0(Math.max(0, baseMonthlyLimit - monthTotal)));
+
+        stats.appendChild(statPlanned);
+        stats.appendChild(statActual);
+        stats.appendChild(statRemaining);
+
+        monthDiv.appendChild(header);
+        monthDiv.appendChild(stats);
+
+        // Transactions list
+        if(hasTransactions){
+          const transList = document.createElement('div');
+          transList.className = 'transactions';
+          
+          transactions.forEach((t, tIdx) => {
+            const transDiv = document.createElement('div');
+            transDiv.className = 'transaction';
+            
+            const leftDiv = document.createElement('div');
+            leftDiv.innerHTML = `
+              <div>${t.description || 'Без описания'}</div>
+              <div class="date">${new Date(t.date).toLocaleDateString('ru-RU')}</div>
+            `;
+            
+            const rightDiv = document.createElement('div');
+            rightDiv.style.display = 'flex';
+            rightDiv.style.gap = '8px';
+            rightDiv.style.alignItems = 'center';
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'amount';
+            amountSpan.textContent = fmt0(t.amount);
+            
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn ghost small';
+            delBtn.textContent = '×';
+            delBtn.style.padding = '2px 8px';
+            delBtn.onclick = () => deleteTransaction(idx, tIdx);
+            
+            rightDiv.appendChild(amountSpan);
+            rightDiv.appendChild(delBtn);
+            
+            transDiv.appendChild(leftDiv);
+            transDiv.appendChild(rightDiv);
+            transList.appendChild(transDiv);
+          });
+          
+          monthDiv.appendChild(transList);
+        }
+
+        $monthsList.appendChild(monthDiv);
+      });
+    }
+
+    function createStatItem(label, value){
+      const div = document.createElement('div');
+      div.className = 'stat-item';
+      div.innerHTML = `
+        <div class="stat-label">${label}</div>
+        <div class="stat-value">${value}</div>
+      `;
+      return div;
+    }
+
+    // ===========================
+    // МОДАЛЬНОЕ ОКНО
+    // ===========================
+    function openAddExpenseModal(monthIndex, monthLabel){
+      state.currentModalMonth = monthIndex;
+      document.getElementById('modalMonth').value = monthLabel;
+      document.getElementById('expenseAmount').value = '';
+      document.getElementById('expenseDesc').value = '';
+      document.getElementById('addExpenseModal').classList.add('show');
+      document.getElementById('expenseAmount').focus();
+    }
+
+    function closeModal(){
+      document.getElementById('addExpenseModal').classList.remove('show');
+      state.currentModalMonth = -1;
+    }
+
+    function saveExpense(){
+      const amount = parseFloat(document.getElementById('expenseAmount').value.replace(',', '.'));
+      const description = document.getElementById('expenseDesc').value.trim();
+      
+      if(!Number.isFinite(amount) || amount <= 0){
+        document.getElementById('expenseAmount').focus();
+        return;
+      }
+      
+      if(state.currentModalMonth >= 0 && state.currentModalMonth < state.months){
+        if(!state.monthlyTransactions[state.currentModalMonth]){
+          state.monthlyTransactions[state.currentModalMonth] = [];
+        }
+        
+        state.monthlyTransactions[state.currentModalMonth].push({
+          amount,
+          description: description || 'Без описания',
+          date: new Date().toISOString()
+        });
+        
+        closeModal();
+        recalcAll();
+      }
+    }
+
+    function deleteTransaction(monthIndex, transactionIndex){
+      if(confirm('Удалить эту трату?')){
+        state.monthlyTransactions[monthIndex].splice(transactionIndex, 1);
+        recalcAll();
+      }
+    }
+
+    // ===========================
+    // ГРАФИК
+    // ===========================
+    function drawChart(labels, planned, actual, forecast){
+      const w = $chart.width, h = $chart.height;
+      ctx.clearRect(0,0,w,h);
+
+      const padL = 60, padR = 16, padT = 14, padB = 38;
+      const gw = w - padL - padR;
+      const gh = h - padT - padB;
+
+      const ys = []
+        .concat(Array.isArray(planned)?planned:[])
+        .concat(Array.isArray(actual)?actual:[])
+        .concat(Array.isArray(forecast)?forecast:[])
+        .filter(Number.isFinite);
+
+      if(ys.length === 0){
+        drawGrid(padL, padT, gw, gh, 4, 4);
+        return;
+      }
+
+      let yMin = Math.min(...ys), yMax = Math.max(...ys);
+      const pad = Math.max(1000, (yMax - yMin)*0.08);
+      yMin -= pad; yMax += pad;
+      if(yMax === yMin){ yMax += 1; yMin -= 1; }
+
+      drawGrid(padL, padT, gw, gh, 5, labels.length || 4);
+      drawYTicks(padL, padT, gw, gh, yMin, yMax, 5);
+      drawXLabels(labels, padL, padT, gw, gh);
+
+      const X = (i, totalPoints)=>{
+        const t = totalPoints === 0 ? 0 : i / totalPoints;
+        return padL + t * gw;
+      };
+      const Y = (val)=>{
+        const t = (val - yMin) / (yMax - yMin);
+        return padT + (1 - t) * gh;
+      };
+
+      // План
+      if(planned && planned.length){
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--line1').trim();
+        ctx.beginPath();
+        for(let i=0;i<planned.length;i++){
+          const x = X(i, planned.length-1), y = Y(planned[i]);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+
+      // Фактический
+      if(actual && actual.length){
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--line2').trim();
+        ctx.beginPath();
+        for(let i=0;i<actual.length;i++){
+          const x = X(i, (planned?.length||1)-1), y = Y(actual[i]);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        
+        // Точки
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--line2').trim();
+        for(let i=0;i<actual.length;i++){
+          const x = X(i, (planned?.length||1)-1), y = Y(actual[i]);
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Прогноз
+      if(forecast && forecast.length){
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8,4]);
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--line3').trim();
+        ctx.beginPath();
+        const totalPoints = (planned?.length||1)-1;
+        const startIndex = (actual?.length||1)-1;
+        for(let i=0;i<forecast.length;i++){
+          const x = X(startIndex + i, totalPoints);
+          const y = Y(forecast[i]);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    function drawGrid(x, y, w, h, rows, cols){
+      ctx.save();
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.3;
+
+      for(let c=0;c<=cols;c++){
+        const xx = x + (w * c/cols);
+        ctx.beginPath();
+        ctx.moveTo(xx, y);
+        ctx.lineTo(xx, y+h);
+        ctx.stroke();
+      }
+      for(let r=0;r<=rows;r++){
+        const yy = y + (h * r/rows);
+        ctx.beginPath();
+        ctx.moveTo(x, yy);
+        ctx.lineTo(x+w, yy);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawYTicks(x, y, w, h, vmin, vmax, rows){
+      ctx.save();
+      ctx.fillStyle = '#8e97b3';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for(let r=0;r<=rows;r++){
+        const t = r/rows;
+        const yy = y + (h * t);
+        const val = vmax - (vmax - vmin)*t;
+        const label = fmtShort(val) + ' ₽';
+        ctx.fillText(label, x - 8, yy);
+      }
+      ctx.restore();
+    }
+
+    function drawXLabels(labels, x, y, w, h){
+      if(!labels || !labels.length) return;
+      ctx.save();
+      ctx.fillStyle = '#8e97b3';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const total = labels.length-1;
+      for(let i=0;i<labels.length;i++){
+        const xx = x + (w * (i/total||0));
+        const shortLabel = labels[i].slice(0, 3);
+        ctx.fillText(shortLabel, xx, y + h + 8);
+      }
+      ctx.restore();
+    }
+
+    // ===========================
+    // ОБРАБОТЧИКИ
+    // ===========================
+    $calcBtn.addEventListener('click', recalcAll);
+    $resetBtn.addEventListener('click', () => {
+      $initial.value = '';
+      $mandatory.value = '';
+      $target.value = '';
+      $start.value = '';
+      $end.value = '';
+      Object.assign(state, {
+        initial:0, mandatory:0, target:0, start:null, end:null, 
+        months:0, monthlyTransactions:[], labels:[]
+      });
+      localStorage.removeItem(STORAGE_KEY);
+      recalcAll();
+    });
+
+    $start.addEventListener('change', recalcAll);
+    $end.addEventListener('change', recalcAll);
+
+    // Закрытие модального окна по клику вне его
+    document.getElementById('addExpenseModal').addEventListener('click', (e) => {
+      if(e.target.id === 'addExpenseModal'){
+        closeModal();
+      }
+    });
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape'){
+        closeModal();
+      }
+    });
+
+    // ===========================
+    // ИНИЦИАЛИЗАЦИЯ
+    // ===========================
+    (function init(){
+      loadState();
+      
+      if(state.initial) $initial.value = String(state.initial);
+      if(state.mandatory) $mandatory.value = String(state.mandatory);
+      if(state.target) $target.value = String(state.target);
+      if(state.start) $start.valueAsDate = state.start;
+      if(state.end) $end.valueAsDate = state.end;
+
+      recalcAll();
+
+      // Демо-данные если пусто
+      if(!state.start && !state.end && !$initial.value && !$target.value){
+        $initial.value = '150000';
+        $mandatory.value = '25000';
+        $target.value = '30000';
+        const today = new Date();
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        const end = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+        $start.valueAsDate = start;
+        $end.valueAsDate = end;
+        recalcAll();
+      }
+    })();
+  </script>
+</body>
+</html>
